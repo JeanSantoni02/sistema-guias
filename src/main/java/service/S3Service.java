@@ -23,12 +23,14 @@ public class S3Service {
     @Value("${aws.s3.bucket-name}")
     private String bucketName;
     
-    @Value("${aws.s3.region:us-east-1}")
-    private String region;
-    
     public String subirArchivoAS3(String archivoPath, String transportista) throws IOException {
-        String fecha = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        // Verificar que el archivo existe
         Path archivoLocal = Paths.get(archivoPath);
+        if (!Files.exists(archivoLocal)) {
+            throw new IOException("El archivo no existe en la ruta: " + archivoPath);
+        }
+
+        String fecha = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String fileName = archivoLocal.getFileName().toString();
         String s3Key = String.format("%s/%s/%s", transportista, fecha, fileName);
         
@@ -40,7 +42,6 @@ public class S3Service {
         
         s3Client.putObject(putRequest, RequestBody.fromBytes(Files.readAllBytes(archivoLocal)));
         
-        System.out.println("Archivo subido a S3: " + s3Key);
         return s3Key;
     }
     
@@ -48,7 +49,6 @@ public class S3Service {
         if (s3Key == null || s3Key.isEmpty()) {
             throw new RuntimeException("La key de S3 es nula o vacía");
         }
-        
         try {
             GetObjectRequest getRequest = GetObjectRequest.builder()
                     .bucket(bucketName)
@@ -57,7 +57,6 @@ public class S3Service {
             
             return s3Client.getObjectAsBytes(getRequest).asByteArray();
         } catch (S3Exception e) {
-            System.err.println("Error descargando de S3: " + e.awsErrorDetails().errorMessage());
             throw new RuntimeException("No se pudo descargar el archivo de S3: " + e.getMessage());
         }
     }
@@ -71,7 +70,6 @@ public class S3Service {
                         .build();
                 
                 s3Client.deleteObject(deleteRequest);
-                System.out.println("Archivo eliminado de S3: " + s3Key);
             } catch (S3Exception e) {
                 System.err.println("Error eliminando de S3: " + e.awsErrorDetails().errorMessage());
             }
