@@ -16,7 +16,7 @@
     <artifactId>sistema-guias</artifactId>
     <version>1.0.0</version>
     <name>sistema-guias</name>
-    <description>Sistema de Gestión de Guías de Despacho</description>
+    <description>Sistema de Gestión de Guías de Despacho con RabbitMQ</description>
     
     <properties>
         <java.version>17</java.version>
@@ -46,6 +46,29 @@
             <optional>true</optional>
         </dependency>
         
+        <!-- ===== NUEVO: Spring Security ===== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+        
+        <!-- ===== NUEVO: RabbitMQ ===== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+        
+        <!-- ===== NUEVO: Oracle Cloud Database ===== -->
+        <dependency>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc11</artifactId>
+            <version>23.3.0.23.09</version>
+        </dependency>
+        
         <!-- Base de datos -->
         <dependency>
             <groupId>com.mysql</groupId>
@@ -59,7 +82,7 @@
             <scope>runtime</scope>
         </dependency>
         
-        <!-- AWS S3 - DESCOMENTADO PARA PRODUCCIÓN -->
+        <!-- AWS S3 -->
         <dependency>
             <groupId>io.awspring.cloud</groupId>
             <artifactId>spring-cloud-aws-starter-s3</artifactId>
@@ -78,6 +101,13 @@
             <artifactId>commons-lang3</artifactId>
         </dependency>
         
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -91,6 +121,14 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
         <finalName>sistema-guias</finalName>

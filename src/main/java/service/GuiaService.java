@@ -25,6 +25,14 @@ public class GuiaService {
     @Autowired
     private S3Service s3Service;
     
+    // ===== NUEVO: Inyectar MessageProducerService =====
+    @Autowired
+    private MessageProducerService messageProducerService;
+    
+    /**
+     * 1. Crear una nueva guía de despacho
+     * Ahora envía un mensaje a RabbitMQ después de guardar
+     */
     @Transactional
     public GuiaDTO crearGuia(MultipartFile archivo, String transportista, String destinatario,
                              String direccionDestino, Double peso, String descripcion) throws IOException {
@@ -39,9 +47,15 @@ public class GuiaService {
         
         Guia savedGuia = guiaRepository.save(guia);
         
+        // ===== NUEVO: Enviar mensaje a RabbitMQ =====
+        messageProducerService.sendGuiaMessage(savedGuia);
+        
         return convertToDTO(savedGuia);
     }
     
+    /**
+     * 2. Subir una guía a S3 (desde EFS)
+     */
     @Transactional
     public GuiaDTO subirGuiaAS3(Long guiaId) throws IOException {
         Guia guia = guiaRepository.findById(guiaId)
@@ -58,6 +72,9 @@ public class GuiaService {
         return convertToDTO(updatedGuia);
     }
     
+    /**
+     * 3. Descargar guía con validación de permisos
+     */
     public byte[] descargarGuia(Long guiaId, String usuarioAutenticado) throws IOException {
         Guia guia = guiaRepository.findById(guiaId)
                 .orElseThrow(() -> new RuntimeException("Guía no encontrada"));
@@ -81,6 +98,9 @@ public class GuiaService {
         throw new IOException("No se encontró el archivo de la guía");
     }
     
+    /**
+     * 4. Modificar o actualizar guía
+     */
     @Transactional
     public GuiaDTO actualizarGuia(Long guiaId, GuiaDTO guiaDTO) {
         Guia guia = guiaRepository.findById(guiaId)
@@ -96,6 +116,9 @@ public class GuiaService {
         return convertToDTO(updatedGuia);
     }
     
+    /**
+     * 5. Eliminar guía específica
+     */
     @Transactional
     public void eliminarGuia(Long guiaId) {
         Guia guia = guiaRepository.findById(guiaId)
@@ -115,6 +138,9 @@ public class GuiaService {
         guiaRepository.delete(guia);
     }
     
+    /**
+     * 6. Consultar guías por transportista y fecha
+     */
     public List<GuiaDTO> consultarGuias(String transportista, String fecha) {
         List<Guia> guias;
         
@@ -131,12 +157,18 @@ public class GuiaService {
         return guias.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
     
+    /**
+     * Obtener una guía por ID
+     */
     public GuiaDTO obtenerGuia(Long id) {
         Guia guia = guiaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Guía no encontrada"));
         return convertToDTO(guia);
     }
     
+    /**
+     * Listar todas las guías
+     */
     public List<GuiaDTO> listarTodas() {
         return guiaRepository.findAll().stream()
                 .map(this::convertToDTO)
